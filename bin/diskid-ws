@@ -23,7 +23,7 @@ class DiskIDWS < Sinatra::Base
 
   post '/' do
     tmpfile = params[:chunk][:tempfile] rescue nil
-    file_name = params[:file_name] rescue ''
+    file_name = (params[:file_name] || '') rescue ''
 
     if tmpfile.nil? 
       halt 400, "Couldn't understand the file you sent me dude."
@@ -36,12 +36,17 @@ class DiskIDWS < Sinatra::Base
 
     begin
       buf = ''
-      buf << "file name: #{file_name}\n"
+      if file_name.empty?
+        buf << "\nSome fields omitted.\n"
+        buf << "Use diskid command for better results\n\n"
+      else
+        buf << "file name: #{file_name}\n"
+      end
       out.each_line do |l|
         buf << l if l !~ /(image:|disk size:)/
       end
 
-      buf << "disk size: #{'%.0f' % file_size.to_i.bytes.to.megabytes.to_f}M (#{file_size} bytes)"
+      buf << "disk size: #{'%.0f' % file_size.to_i.bytes.to.megabytes.to_f}M (#{file_size} bytes)\n"
       tmpfile.close
       FileUtils.rm_f tmpfile.path
       buf
