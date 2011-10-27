@@ -3,7 +3,7 @@ require 'sinatra'
 require 'alchemist'
 
 DOCS = """
-<h1>FrameOS Virtual Disk Identification Service</h1>
+<h1>Virtual Disk Identification Service</h1>
 
 <h2>Installation:</h2>
 
@@ -37,7 +37,7 @@ class DiskIDWS < Sinatra::Base
     begin
       buf = ''
       if file_name.empty?
-        buf << "\nSome fields omitted.\n"
+        buf << "\nSome fields are being omitted and 'disk size:' won't be accurate.\n"
         buf << "Use diskid command for better results\n\n"
       else
         buf << "file name: #{file_name}\n"
@@ -74,4 +74,5 @@ end
 DiskIDWS.set :bind => '127.0.0.1'
 #DiskIDWS.set :raise_errors => false
 DiskIDWS.set :show_exceptions => false
+DiskIDWS.set :logging => true
 DiskIDWS.run!
