@@ -1,5 +1,16 @@
-# Disk Identification Service 
+# DiskID
  
+Get info from a virtual disk file.
+
+    $ diskid micro-frameos.vmdk
+
+    diskid.frameos.org
+
+    file name: micro-frameos.vmdk
+    file format: vmdk
+    virtual size: 1.2G (1287651328 bytes)
+    disk size: 274M (287593984 bytes)
+
 ## Installation
 
     gem install diskid
