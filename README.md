@@ -39,7 +39,11 @@ PROTIP: You don't need to install diskid to use the service
 
     head -n 20 ubuntu64-1104.vmdk > /tmp/dchunk && curl -X POST -F chunk=@/tmp/dchunk http://diskid.frameos.org
 
-    
+## NERD STUFF
+
+DiskID Webservice is a thin wrapper around the bleeding edge version of qemu-img from the QEMU project: http://qemu.org
+
+All the magic happens there!
 
 Copyright (c) 2011 Sergio Rubio. See LICENSE.txt for
 further details.
