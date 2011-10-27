@@ -5,9 +5,11 @@ require 'alchemist'
 DOCS = """
 <h1>Virtual Disk Identification Service</h1>
 
+This web service gives you info about a virtual disk file.
+
 <h2>Installation:</h2>
 
-gem install diskid
+<i>gem install diskid</i>
 <br/>
 
 <h2>Usage:</h2>
@@ -17,6 +19,15 @@ gem install diskid
 <br/>
 
 <b>Supported formats:</b> vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug
+
+<p>
+<b>About diskid</b>
+<br/>
+<i>diskid and the web service that powers this site are open source software:</i>
+<br/>
+<br/>
+<a href='http://github.com/rubiojr/diskid'>http://github.com/rubiojr/diskid</a>
+</p>
 
 """
 class DiskIDWS < Sinatra::Base

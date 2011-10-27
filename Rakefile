@@ -18,6 +18,7 @@ Jeweler::Tasks.new do |gem|
   gem.add_runtime_dependency 'sinatra'
   gem.add_runtime_dependency 'clamp'
   gem.add_runtime_dependency 'alchemist'
+  gem.add_runtime_dependency 'rest-client'
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
