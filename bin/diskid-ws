@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+require 'sinatra'
+require 'alchemist'
+
+DOCS = """
+<h1>FrameOS Virtual Disk Identification Service</h1>
+
+<h2>Installation:</h2>
+
+gem install diskid
+<br/>
+
+<h2>Usage:</h2>
+
+<i>diskid path-to-disk-file.vmdk</i>
+<br/>
+<br/>
+
+<b>Supported formats:</b> vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug
+
+"""
+class DiskIDWS < Sinatra::Base
+
+  post '/' do
+    tmpfile = params[:chunk][:tempfile] rescue nil
+    file_name = params[:file_name] rescue ''
+
+    if tmpfile.nil? 
+      halt 400, "Couldn't understand the file you sent me dude."
+    end
+    file_size = params[:file_size]
+    out = `qemu-img-bleeding info #{tmpfile.path}`
+    if $? != 0
+      halt 400, "Couldn't understand the file you sent me dude."
+    end
+
+    begin
+      buf = ''
+      buf << "file name: #{file_name}\n"
+      out.each_line do |l|
+        buf << l if l !~ /(image:|disk size:)/
+      end
+
+      buf << "disk size: #{'%.0f' % file_size.to_i.bytes.to.megabytes.to_f}M (#{file_size} bytes)"
+      tmpfile.close
+      FileUtils.rm_f tmpfile.path
+      buf
+    rescue => e
+      puts $!
+      puts $@
+      halt 400, "Something bad happened :("
+    end
+  end
+
+  get '/service-check' do
+    DOCS
+  end
+
+  error do
+    DOCS
+  end
+
+  not_found do
+    DOCS
+  end
+
+end
+
+DiskIDWS.set :bind => '127.0.0.1'
+#DiskIDWS.set :raise_errors => false
+DiskIDWS.set :show_exceptions => false
+DiskIDWS.run!

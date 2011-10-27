@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+require 'clamp'
+require 'rest-client'
+
+disk_file = ARGV[0]
+if disk_file.nil? or not File.exist?(disk_file)
+  puts
+  puts "Usage: diskid path-to-disk-file"
+  puts
+  puts "Supported formats: vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug"
+  exit 1
+end
+host = 'diskid.frameos.org'
+
+puts "\n#{host}\n\n"
+
+begin
+  RestClient.get "http://#{host}/service-check"
+rescue => e
+  $stderr.puts "Couldn't reach http://#{host}."
+  exit 1
+end
+
+out = `head -n 20 #{disk_file}|curl -s -X POST -F chunk=@- -F file_size=#{File.size(disk_file)} -F file_name=#{File.basename(disk_file)} http://#{host} 2>&1`
+if $? != 0
+  $stderr.puts "Something went wrong :("
+  $stderr.puts out
+else
+  puts out
+end
