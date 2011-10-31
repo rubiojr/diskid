@@ -49,7 +49,7 @@ class DiskIDWS < Sinatra::Base
     file_size = params[:file_size] || ''
     begin
       inspector = DiskID::Inspector.new(tmpfile.path)
-      di = inspector.inspect
+      di = inspector.identify
       di.file_name = file_name
       di.disk_size = file_size
       if params[:format] == 'json'

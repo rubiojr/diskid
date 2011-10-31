@@ -7,6 +7,7 @@ require 'diskid'
 
 class DiskIDCommand < Clamp::Command
   parameter 'FILE', "Disk file", :attribute_name => 'file'
+  option '--local', :flag, "Try to identify the disk using a local qemu-img binary"
   option '--server-port', "PORT", "DiskID service port", :default => '80'
   option '--server-host', "HOST", "DiskID service host", :default => 'diskid.frameos.org'
   option '--format', "FORMAT", "Disk info output format (text, json, xml)", :default => 'text'
@@ -21,33 +22,41 @@ class DiskIDCommand < Clamp::Command
       puts "Supported formats: vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug"
       exit 1
     end
+    
+    # Use local qemu-img to identify the disk
+    if local?
+      di = DiskID::Inspector.new(file, 'qemu-img').identify
+      begin 
+        puts di.send "to_#{format}"
+      rescue NoMethodError
+        $stderr.puts "Invalid format."
+      end
+    else
+      begin
+        RestClient.get "http://#{server_host}:#{server_port}/service-check"
+      rescue => e
+        $stderr.puts "Couldn't reach http://#{server_host}."
+        exit 1
+      end
 
-    puts "\n#{server_host}\n\n"
+      fsize = File.size(file).bytes.to.megabytes.to_f.round
+      unit = 'M'
+      if fsize > 1024
+        fsize = fsize.megabytes.to.gigabytes.to_f.round
+        unit = 'G'
+      end
 
-    begin
-      RestClient.get "http://#{server_host}:#{server_port}/service-check"
-    rescue => e
-      $stderr.puts "Couldn't reach http://#{server_host}."
-      exit 1
+      fsize = "#{fsize}#{unit}"
+
+      #out = `head -n 20 #{file}|curl -s -X POST -F client_version=#{DiskID::VERSION} -F chunk=@- -F file_size=#{fsize} -F file_name=#{File.basename(file)} http://#{server_host}:#{server_port}/?format=#{format} 2>&1`
+      out = RestClient.post "http://#{server_host}:#{server_port}/",
+                      :chunk => File.read(file, 20000),
+                      :client_version => DiskID::VERSION,
+                      :file_size => fsize,
+                      :file_name => File.basename(file),
+                      :format => format
+      puts out
     end
-
-    fsize = File.size(file).bytes.to.megabytes.to_f.round
-    unit = 'M'
-    if fsize > 1024
-      fsize = fsize.megabytes.to.gigabytes.to_f.round
-      unit = 'G'
-    end
-
-    fsize = "#{fsize}#{unit}"
-
-    #out = `head -n 20 #{file}|curl -s -X POST -F client_version=#{DiskID::VERSION} -F chunk=@- -F file_size=#{fsize} -F file_name=#{File.basename(file)} http://#{server_host}:#{server_port}/?format=#{format} 2>&1`
-    out = RestClient.post "http://#{server_host}:#{server_port}/",
-                    :chunk => File.read(file, 20000),
-                    :client_version => DiskID::VERSION,
-                    :file_size => fsize,
-                    :file_name => File.basename(file),
-                    :format => format
-    puts out
   end
 end
 

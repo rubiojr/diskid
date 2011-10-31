@@ -25,6 +25,8 @@ Internet access is also required, as diskid sends a few bytes to http://diskid.f
     
 ### EXAMPLES
 
+Identify a VMDK:
+
     $ diskid ubuntu64-1104.vmdk
 
     diskid.frameos.org
@@ -32,6 +34,7 @@ Internet access is also required, as diskid sends a few bytes to http://diskid.f
     file name: ubuntu64-1104.vmdk
     file format: vmdk
     virtual size: 9.0G 
+    variant: streamOptimized
     disk size: 319M 
 
 
@@ -39,19 +42,29 @@ PROTIP: You don't need to install diskid to use the service
 
     head -n 20 ubuntu64-1104.vmdk > /tmp/dchunk && curl -X POST -F chunk=@/tmp/dchunk http://diskid.frameos.org/?format=text
 
-JSON output:
+Identify a VMDK and print JSON output:
     
     $ diskid --format json ubuntu64-1104.vmdk
 
     diskid.frameos.org
 
-    {"file_name":"ubuntu64-1104.vmdk","format":"vmdk","virtual_size":"9.0G","disk_size":"319M"}
+    {"file_name":"ubuntu64-1104.vmdk","format":"vmdk", "variant":"streamOptimized", "virtual_size":"9.0G","disk_size":"319M"}
 
-Valid output formats:
+  Valid output formats:
 
-* json
-* text
-* xml
+  * json
+  * text
+  * xml
+
+Identify a virtual disk without using the diskid.frameos.org web service (needs qemu-img installed locally):
+
+    $ diskid --local ubuntu64-1104.vmdk
+    file_name: ubuntu64-1104.vmdk
+    format: vmdk
+    variant: monolithicSparse
+    virtual_size: 9.0G
+    disk_size: 319M
+
 
 ## NERD STUFF
 
