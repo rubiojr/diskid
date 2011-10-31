@@ -2,30 +2,54 @@
 require 'fileutils'
 require 'clamp'
 require 'rest-client'
+require 'alchemist'
+require 'diskid'
 
-disk_file = ARGV[0]
-if disk_file.nil? or not File.exist?(disk_file)
-  puts
-  puts "Usage: diskid path-to-disk-file"
-  puts
-  puts "Supported formats: vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug"
-  exit 1
+class DiskIDCommand < Clamp::Command
+  parameter 'FILE', "Disk file", :attribute_name => 'file'
+  option '--server-port', "PORT", "DiskID service port", :default => '80'
+  option '--server-host', "HOST", "DiskID service host", :default => 'diskid.frameos.org'
+  option '--format', "FORMAT", "Disk info output format (text, json, xml)", :default => 'text'
+
+
+  def execute
+
+    if file.nil? or not File.exist?(file)
+      puts
+      puts "Usage: diskid path-to-disk-file"
+      puts
+      puts "Supported formats: vvfat vpc vmdk vdi sheepdog raw host_cdrom host_floppy host_device file qed qcow2 qcow parallels nbd dmg tftp ftps ftp https http cow cloop bochs blkverify blkdebug"
+      exit 1
+    end
+
+    puts "\n#{server_host}\n\n"
+
+    begin
+      RestClient.get "http://#{server_host}:#{server_port}/service-check"
+    rescue => e
+      $stderr.puts "Couldn't reach http://#{server_host}."
+      exit 1
+    end
+
+    fsize = File.size(file).bytes.to.megabytes.to_f.round
+    unit = 'M'
+    if fsize > 1024
+      fsize = fsize.megabytes.to.gigabytes.to_f.round
+      unit = 'G'
+    end
+
+    fsize = "#{fsize}#{unit}"
+
+    #out = `head -n 20 #{file}|curl -s -X POST -F client_version=#{DiskID::VERSION} -F chunk=@- -F file_size=#{fsize} -F file_name=#{File.basename(file)} http://#{server_host}:#{server_port}/?format=#{format} 2>&1`
+    out = RestClient.post "http://#{server_host}:#{server_port}/",
+                    :chunk => File.read(file, 20000),
+                    :client_version => DiskID::VERSION,
+                    :file_size => fsize,
+                    :file_name => File.basename(file),
+                    :format => format
+    puts out
+  end
 end
-host = 'diskid.frameos.org'
 
-puts "\n#{host}\n\n"
+DiskIDCommand.run
 
-begin
-  RestClient.get "http://#{host}/service-check"
-rescue => e
-  $stderr.puts "Couldn't reach http://#{host}."
-  exit 1
-end
-
-out = `head -n 20 #{disk_file}|curl -s -X POST -F chunk=@- -F file_size=#{File.size(disk_file)} -F file_name=#{File.basename(disk_file)} http://#{host} 2>&1`
-if $? != 0
-  $stderr.puts "Something went wrong :("
-  $stderr.puts out
-else
-  puts out
-end

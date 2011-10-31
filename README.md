@@ -21,9 +21,9 @@ Internet access is also required, as diskid sends a few bytes to http://diskid.f
 
 ## Usage
 
-    diskid path-to-disk-file
+    diskid --help
     
-i.e.
+### EXAMPLES
 
     $ diskid ubuntu64-1104.vmdk
 
@@ -31,13 +31,27 @@ i.e.
 
     file name: ubuntu64-1104.vmdk
     file format: vmdk
-    virtual size: 9.0G (9663676416 bytes)
-    disk size: 319M (334364672 bytes)
+    virtual size: 9.0G 
+    disk size: 319M 
 
 
 PROTIP: You don't need to install diskid to use the service
 
-    head -n 20 ubuntu64-1104.vmdk > /tmp/dchunk && curl -X POST -F chunk=@/tmp/dchunk http://diskid.frameos.org
+    head -n 20 ubuntu64-1104.vmdk > /tmp/dchunk && curl -X POST -F chunk=@/tmp/dchunk http://diskid.frameos.org/?format=text
+
+JSON output:
+    
+    $ diskid --format json ubuntu64-1104.vmdk
+
+    diskid.frameos.org
+
+    {"file_name":"ubuntu64-1104.vmdk","format":"vmdk","virtual_size":"9.0G","disk_size":"319M"}
+
+Valid output formats:
+
+* json
+* text
+* xml
 
 ## NERD STUFF
 

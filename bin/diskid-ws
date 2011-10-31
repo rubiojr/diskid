@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'sinatra'
 require 'alchemist'
+require 'diskid'
 
 DOCS = """
 <h1>Virtual Disk Identification Service</h1>
@@ -33,31 +34,41 @@ This web service gives you info about a virtual disk file.
 class DiskIDWS < Sinatra::Base
 
   post '/' do
+    # post using CURL
     tmpfile = params[:chunk][:tempfile] rescue nil
+    # File was posted using diskid client
+    if not tmpfile
+      tmpfile = File.open("/tmp/diskid_#{Time.now.to_i}", 'w+')
+      tmpfile.write(params[:chunk])
+    end
     file_name = (params[:file_name] || '') rescue ''
 
     if tmpfile.nil? 
       halt 400, "Couldn't understand the file you sent me dude."
     end
-    file_size = params[:file_size]
-    out = `qemu-img-bleeding info #{tmpfile.path}`
-    if $? != 0
-      halt 400, "Couldn't understand the file you sent me dude."
-    end
-
+    file_size = params[:file_size] || ''
     begin
-      buf = ''
-      if file_name.empty?
-        buf << "\nSome fields are being omitted and 'disk size:' won't be accurate.\n"
-        buf << "Use diskid command for better results\n\n"
+      inspector = DiskID::Inspector.new(tmpfile.path)
+      di = inspector.inspect
+      di.file_name = file_name
+      di.disk_size = file_size
+      if params[:format] == 'json'
+        buf = di.to_json 
+      elsif params[:format] == 'xml'
+        buf = di.to_xml
       else
-        buf << "file name: #{file_name}\n"
+        out = di.to_hash
+        buf = ''
+        if file_name.empty?
+          buf << "\nSome fields are being omitted and 'disk size:' won't be accurate.\n"
+          buf << "Use diskid command for better results\n\n"
+        else
+          buf << "file_name: #{file_name}\n"
+        end
+        out.each do |k,v|
+          buf << "#{k}: #{v}\n" if k != 'file_name'
+        end
       end
-      out.each_line do |l|
-        buf << l if l !~ /(image:|disk size:)/
-      end
-
-      buf << "disk size: #{'%.0f' % file_size.to_i.bytes.to.megabytes.to_f}M (#{file_size} bytes)\n"
       tmpfile.close
       FileUtils.rm_f tmpfile.path
       buf
@@ -69,6 +80,10 @@ class DiskIDWS < Sinatra::Base
   end
 
   get '/service-check' do
+    DOCS
+  end
+
+  get '/' do
     DOCS
   end
 

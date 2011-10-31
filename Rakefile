@@ -19,6 +19,7 @@ Jeweler::Tasks.new do |gem|
   gem.add_runtime_dependency 'clamp'
   gem.add_runtime_dependency 'alchemist'
   gem.add_runtime_dependency 'rest-client'
+  gem.add_runtime_dependency 'json'
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
