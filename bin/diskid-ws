@@ -37,7 +37,7 @@ class DiskIDWS < Sinatra::Base
     # post using CURL
     tmpfile = params[:chunk][:tempfile] rescue nil
     # File was posted using diskid client
-    if not tmpfile
+    if not tmpfile.is_a?(Tempfile)
       tmpfile = File.open("/tmp/diskid_#{Time.now.to_i}", 'w+')
       tmpfile.write(params[:chunk])
     end
