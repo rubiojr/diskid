@@ -1,8 +1,43 @@
+require 'alchemist'
+require 'json'
+require 'rest-client'
+require 'fileutils'
+
 module DiskID
 
-  require 'json'
 
-  VERSION = "0.2.2"
+  VERSION = "0.3"
+
+  class Client
+    def self.identify(file, params = {})
+      format = params[:format] || 'json'
+      server_host = params[:server_host] || 'diskid.frameos.org'
+      server_port = params[:server_port] || '80'
+
+      begin
+        RestClient.get "http://#{server_host}:#{server_port}/service-check" 
+      rescue => e
+        raise Exception.new("Couldn't reach http://#{server_host}.")
+      end
+
+      fsize = File.size(file).bytes.to.megabytes.to_f.round
+      unit = 'M'
+      if fsize > 1024
+        fsize = fsize.megabytes.to.gigabytes.to_f.round
+        unit = 'G'
+      end
+
+      fsize = "#{fsize}#{unit}"
+
+      out = RestClient.post "http://#{server_host}:#{server_port}/",
+                      :chunk => File.read(file, 20000),
+                      :client_version => DiskID::VERSION,
+                      :file_size => fsize,
+                      :file_name => File.basename(file),
+                      :format => format
+      JSON.parse(out)
+    end
+  end
 
   class DiskInfo
 

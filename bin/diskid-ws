@@ -52,6 +52,9 @@ class DiskIDWS < Sinatra::Base
       di = inspector.identify
       di.file_name = file_name
       di.disk_size = file_size
+      if di.format == 'raw'
+        di.virtual_size = file_size
+      end
       if params[:format] == 'json'
         buf = di.to_json 
       elsif params[:format] == 'xml'

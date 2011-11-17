@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
-require 'fileutils'
 require 'clamp'
-require 'rest-client'
-require 'alchemist'
 require 'diskid'
 
 class DiskIDCommand < Clamp::Command
